@@ -40,7 +40,7 @@ class ChineseWhispers():
         self.graphed = False
 
     def v(self, text):
-        return self.vtree.v(text)
+        return self.vtree.vectorize_text(text)
 
     def t(self, id):
         if id in self.dict:
@@ -72,8 +72,8 @@ class ChineseWhispers():
         common_utils.create_dir(self.indexdir, remove = True)
         self.lucene = LuceneSearch(index_path = self.indexdir)
         self.lucene.index(self.data, remove = True)
-        self.vtree.vectorized(self.data)
-        self.vtree.kdtree()
+        self.vtree._vectorize_text_list(self.data)
+        self.vtree._build_kdtree()
 
     def add_nodes(self, data):
         '''
@@ -109,7 +109,7 @@ class ChineseWhispers():
 
         adjacents = []
         try:
-            vec,_ = self.vtree.v(text)
+            vec,_ = self.vtree.vectorize_text(text)
         except:print("KDTree .....................error")
 
         if vec is not None and len(vec) > 0:

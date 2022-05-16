@@ -1,30 +1,21 @@
 #-*- coding:utf-8 -*-
-from __future__ import print_function
-from __future__ import division
 import os
-import sys
-curdir = os.path.dirname(os.path.abspath(__file__))
-rootdir=os.path.join(curdir, os.path.pardir, os.path.pardir, os.path.pardir)
-sys.path.append(os.path.join(rootdir, 'app'))
-
-if sys.version_info[0] < 3:
-    reload(sys)
-    sys.setdefaultencoding("utf-8")
 
 import lucene
-from subprocess import *
 from java.nio.file import Paths
-from org.apache.lucene.analysis.miscellaneous import LimitTokenCountAnalyzer
 from org.apache.lucene.analysis.core import WhitespaceAnalyzer
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig
+from org.apache.lucene.analysis.miscellaneous import LimitTokenCountAnalyzer
 from org.apache.lucene.document import Document, Field, StringField, TextField
-from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.search import IndexSearcher
 from org.apache.lucene.index import DirectoryReader
+from org.apache.lucene.index import IndexWriter, IndexWriterConfig
 from org.apache.lucene.queryparser.classic import QueryParser
-from common import utils as common_utils
-from common import tokenizer
+from org.apache.lucene.search import IndexSearcher
+from org.apache.lucene.store import SimpleFSDirectory
 
+from app.common import utils, project_root_path
+from app.common.tokenizer import Tokenizer
+
+tokenizer = Tokenizer()
 lucene.initVM(vmargs=['-Djava.awt.headless=true'])
 
 def _get_post_terms(sentence):
@@ -46,12 +37,12 @@ def indexing(file_path, target, remove=True):
     if not os.path.exists(file_path):
         raise BaseException("index error: %s does not exist." % file_path)
     if remove:
-        common_utils.create_dir(target, remove = True)
+        utils.create_dir(target, remove = True)
     directory = SimpleFSDirectory(Paths.get(target))
     analyzer = LimitTokenCountAnalyzer(WhitespaceAnalyzer(), 10000)
     config = IndexWriterConfig(analyzer)
     writer = IndexWriter(directory, config)
-    with common_utils.smart_open(file_path) as fin:
+    with utils.smart_open(file_path) as fin:
         for x in fin.readlines():
             o = x.split()
             id = o[0].strip()
@@ -84,7 +75,7 @@ class LuceneSearch():
         index data: [[id, text], [id1, text1], ...]
         '''
         if remove:
-            common_utils.create_dir(self.index_path, remove = True)
+            utils.create_dir(self.index_path, remove = True)
         directory = SimpleFSDirectory(Paths.get(self.index_path))
         config = IndexWriterConfig(self.analyzer)
         writer = IndexWriter(directory, config)
@@ -122,38 +113,21 @@ class LuceneSearch():
                                 }))
         return results
 
-import unittest
-class Test(unittest.TestCase):
-    def setUp(self):
-        pass
-    def tearDown(self):
-        pass
-    def test_index_and_search(self):
-        print("test_index_files")
-        to_ = os.path.join(rootdir, 'tmp', 'test_index')
-        from_ = os.path.join(rootdir, 'corpus', 'gfzq', 'gfzq.2017-08-25.visitor')
-        search = LuceneSearch(index_path = to_)
-        data = []
-        with common_utils.smart_open(from_) as fin:
-            for x in fin.readlines():
-                o = x.split()
-                id = o[0].strip()
-                post = o[1].strip()
-                data.append([id, post])
-
-        search.index(data)
-        matched = search.query("合规")
-        for x in matched:
-            print("id: %s, post: %s, score: %s" % (x['id'], x['post'], x['score']))
-
-    def search_index_files(self):
-        print("search_index_files")
-        from_ = os.path.join(rootdir, 'tmp', 'test_index')
-        search = LuceneSearch(from_)
-        search.query("合规")
-
-def test():
-    unittest.main()
 
 if __name__ == "__main__":
-    test()
+    print("test_index_files")
+    to_ = os.path.join(project_root_path, 'tmp', 'test_index')
+    from_ = os.path.join(project_root_path, 'corpus', 'gfzq', 'gfzq.2017-08-25.visitor')
+    search = LuceneSearch(index_path=to_)
+    data = []
+    with utils.smart_open(from_) as fin:
+        for x in fin.readlines():
+            o = x.split()
+            id = o[0].strip()
+            post = o[1].strip()
+            data.append([id, post])
+
+    search.index(data)
+    matched = search.query("合规")
+    for x in matched:
+        print("id: %s, post: %s, score: %s" % (x['id'], x['post'], x['score']))

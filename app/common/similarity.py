@@ -34,6 +34,10 @@ class SimilarityComputer:
         similarity = self._similarity_distance(s1, s2)
         return similarity
 
+    @staticmethod
+    def sim_molecule(x_):
+        return np.sum(x_, axis=0)
+
     def _load_stopwords(self):
         self._stopwords = set()
         for stopword_file_path in self._stopwords_file_path_list:
@@ -45,7 +49,7 @@ class SimilarityComputer:
             raise Exception(f"Model file {self._w2v_model_file_path} does not exist")
         self._w2v_model = KeyedVectors.load_from_binary_file(self._w2v_model_file_path)
 
-    def _vectorize(self, sentence):
+    def vectorize(self, sentence):
         vectors = []
         for word in sentence.split():
             if word not in self._stopwords:
@@ -73,19 +77,15 @@ class SimilarityComputer:
         return similarity
 
     def _similarity_distance(self, s1, s2):
-        vector_s1 = self._vectorize(s1)
-        vector_s2 = self._vectorize(s2)
-        a = self._sim_molecule(vector_s1)
-        b = self._sim_molecule(vector_s2)
+        vector_s1 = self.vectorize(s1)
+        vector_s2 = self.vectorize(s2)
+        a = self.sim_molecule(vector_s1)
+        b = self.sim_molecule(vector_s2)
         g = 1 / (np.linalg.norm(a - b) + 1)
         u = self._jaccard_similarity(s1, s2)
         r = g * (12 + abs(len(vector_s1) - len(vector_s2))) + u * 0.8
         r = min(r, 1.0)
         return round(r, 3)
-
-    @staticmethod
-    def _sim_molecule(x_):
-        return np.sum(x_, axis=0)  # 将x 按列相加，得到长度 100 的数组
 
 
 if __name__ == "__main__":
