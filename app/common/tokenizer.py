@@ -10,7 +10,7 @@ from app.common import project_root_path
 
 
 class Tokenizer:
-    RESOURCES_PATH = os.path.join(project_root_path, "resources")
+    RESOURCES_PATH = os.path.join(project_root_path, "app", "resources")
     COMPANY_DICT_PATH = os.path.join(RESOURCES_PATH, "vocab.company.utf8")
     SF_DICT_PATH = os.path.join(RESOURCES_PATH, "vocab.security.utf8")
     SOUGOU_DICT_PATH = os.path.join(RESOURCES_PATH, "vocab.sougou.utf8")

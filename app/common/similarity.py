@@ -5,9 +5,11 @@ import numpy as np
 
 from app.common.tokenizer import Tokenizer
 from app.common.word2vec import KeyedVectors
+from app.common import project_root_path
 
-STOPWORDS_FILE_LIST = ['data/word2vec/news.stopwords.txt', 'resources/stopwords.utf8']
-W2V_MODEL_PATH = 'data/word2vec/news.w2v.bin.gz'
+STOPWORDS_FILE_LIST = [os.path.join(project_root_path, 'data/word2vec/news.stopwords.txt'),
+                       os.path.join(project_root_path, 'app/resources/stopwords.utf8')]
+W2V_MODEL_PATH = os.path.join(project_root_path, 'data/word2vec/news.w2v.bin.gz')
 
 
 class SimilarityComputer:
@@ -36,12 +38,12 @@ class SimilarityComputer:
         self._stopwords = set()
         for stopword_file_path in self._stopwords_file_path_list:
             with open(stopword_file_path) as f:
-                self._stopwords += set([word.strip() for word in f.read_lines()])
+                self._stopwords &= set([word.strip() for word in f.readlines()])
 
     def _load_w2v(self):
         if not os.path.exists(self._w2v_model_file_path):
             raise Exception(f"Model file {self._w2v_model_file_path} does not exist")
-        self._w2v_model = KeyedVectors.load_word2vec_format(self._w2v_model_file_path, binary=True, unicode_errors='ignore')
+        self._w2v_model = KeyedVectors.load_from_binary_file(self._w2v_model_file_path)
 
     def _vectorize(self, sentence):
         vectors = []
@@ -76,7 +78,7 @@ class SimilarityComputer:
         a = self._sim_molecule(vector_s1)
         b = self._sim_molecule(vector_s2)
         g = 1 / (np.linalg.norm(a - b) + 1)
-        u = self._jarccard_similarity(s1, s2)
+        u = self._jaccard_similarity(s1, s2)
         r = g * (12 + abs(len(vector_s1) - len(vector_s2))) + u * 0.8
         r = min(r, 1.0)
         return round(r, 3)
